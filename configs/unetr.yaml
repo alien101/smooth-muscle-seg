@@ -1,0 +1,57 @@
+# UNETR-2D: Vision Transformer encoder + convolutional skip-connection decoder.
+# A "tiny" variant (embed_dim=384, depth=6) is cheaper; the defaults below
+# match the standard ViT-B/16 encoder used in the original UNETR paper.
+#
+# Usage:
+#   python train.py --config configs/unetr.yaml
+
+# ── Data ──────────────────────────────────────────────────────────────────────
+data:
+  data_dir:   "data"
+  image_size: 512            # must be divisible by patch_size (16)
+  num_classes: 1
+  val_fraction: 0.15
+  test_fraction: 0.05
+  num_workers: 4
+
+# ── Model ─────────────────────────────────────────────────────────────────────
+model:
+  architecture: "unetr"
+  in_channels: 3
+  # ViT encoder
+  patch_size: 16             # 512/16 = 32×32 patch grid
+  embed_dim: 768             # ViT-B width  (use 384 for a smaller "tiny" variant)
+  depth: 12                  # number of transformer layers
+  num_heads: 12              # attention heads (embed_dim must be divisible by this)
+  # Convolutional decoder
+  feature_size: 64           # base channel width
+
+# ── Training ──────────────────────────────────────────────────────────────────
+training:
+  max_epochs: 100
+  batch_size: 16              # ViT is memory-heavy; reduce if OOM
+  learning_rate: 1.0e-3
+  weight_decay: 1.0e-4
+  loss: "dice_bce"
+  scheduler: "cosine"
+  early_stopping_patience: 15
+  precision: "16-mixed"
+  method: "standard"         # standard | flow_matching
+
+# ── Augmentation ──────────────────────────────────────────────────────────────
+augmentation:
+  flip_p: 0.5
+  rotate_limit: 90
+  brightness_limit: 0.2
+  contrast_limit: 0.2
+  hue_shift_limit: 10
+  elastic_p: 0.3
+  grid_distortion_p: 0.3
+
+# ── Logging / Checkpointing ────────────────────────────────────────────────────
+logging:
+  log_dir: "logs"
+  experiment_name: "unetr_seg"
+  save_top_k: 3
+  monitor: "val/dice"
+  monitor_mode: "max"

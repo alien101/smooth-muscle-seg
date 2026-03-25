@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+.venv/
+*.egg
+
+# Data (keep structure, not files)
+data/**/*
+!data/.gitkeep
+test/
+
+# Logs & checkpoints
+logs/
+
+# Predictions
+predictions/
+
+# uv
+.python-version
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

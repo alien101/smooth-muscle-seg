@@ -1,0 +1,50 @@
+# ── Data ──────────────────────────────────────────────────────────────────────
+data:
+  data_dir:   "data/aSMA_SmoothMuscle"  # flat dir with *_HE.png and *_mask.png pairs
+  image_size: 512                        # crop / resize target (square)
+  num_classes: 1                     # 1 = binary (smooth muscle vs background)
+  val_fraction: 0.15
+  test_fraction: 0.05
+  num_workers: 4
+
+# ── Model ─────────────────────────────────────────────────────────────────────
+model:
+  # SMP family:  unet | unetplusplus | manet | linknet | fpn
+  # ViT-based:   unetr  (see configs/unetr.yaml for extra kwargs)
+  # ConvNeXt:    mednext (see configs/mednext.yaml for extra kwargs)
+  # SMP + Swin:  architecture=unet, encoder=timm-swin_base_patch4_window7_224
+  #              (requires: pip install timm)
+  architecture: "unet"
+  encoder: "efficientnet-b3"         # any SMP-supported encoder
+  encoder_weights: "imagenet"        # imagenet | None
+  in_channels: 3
+
+# ── Training ──────────────────────────────────────────────────────────────────
+training:
+  max_epochs: 100
+  batch_size: 16
+  learning_rate: 1.0e-4
+  weight_decay: 1.0e-5
+  loss: "dice_bce"                   # dice_bce | focal | dice
+  scheduler: "cosine"                # cosine | step | none
+  early_stopping_patience: 15
+  precision: "16-mixed"              # 32 | 16-mixed | bf16-mixed
+  method: "standard"                 # standard | flow_matching
+
+# ── Augmentation ──────────────────────────────────────────────────────────────
+augmentation:
+  flip_p: 0.5
+  rotate_limit: 90
+  brightness_limit: 0.2
+  contrast_limit: 0.2
+  hue_shift_limit: 10
+  elastic_p: 0.3
+  grid_distortion_p: 0.3
+
+# ── Logging / Checkpointing ────────────────────────────────────────────────────
+logging:
+  log_dir: "logs"
+  experiment_name: "smooth_muscle_seg"
+  save_top_k: 3
+  monitor: "val/dice"
+  monitor_mode: "max"

@@ -1,0 +1,47 @@
+[project]
+name = "smooth-muscle-seg"
+version = "0.1.0"
+description = "Smooth muscle segmentation from H&E histology using U-Net"
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.2",
+    "torchvision>=0.17",
+    "lightning>=2.2",
+    "segmentation-models-pytorch>=0.3",
+    "albumentations>=1.4",
+    "opencv-python-headless>=4.9",
+    "Pillow>=10.0",
+    "numpy>=1.26",
+    "pyyaml>=6.0",
+    "tqdm>=4.66",
+    "matplotlib>=3.8",
+    "scikit-learn>=1.4",
+    "tensorboard>=2.14",
+    "setuptools<75",
+]
+
+[project.optional-dependencies]
+vit = [
+    "timm>=0.9",               # Swin/ViT encoders via SMP (architecture=unet, encoder=timm-swin_*)
+]
+dev = [
+    "ipykernel",
+    "jupyter",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/smooth_muscle_seg"]
+
+# Pin torch/torchvision to the PyTorch CUDA 12.1 index (compatible with driver CUDA 12.2)
+[[tool.uv.index]]
+name = "pytorch-cu121"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu121" }
+torchvision = { index = "pytorch-cu121" }

@@ -1,0 +1,63 @@
+# Flow Matching segmentation (OT-CFM).
+#
+# The velocity network v_θ(img, x_t, t) learns to transport Gaussian noise
+# to the binary mask distribution via a linear conditional flow.
+# Any architecture in build_model can be used as the velocity backbone.
+#
+# Training loss: MSE on velocity  ||v_θ(img, x_t, t) − (x_1 − x_0)||²
+# Inference:     Euler ODE from x_0 ~ N(0,1) → x_1 ≈ mask
+#
+# Usage:
+#   python train.py --config configs/flow_matching.yaml
+#   python train.py --config configs/flow_matching.yaml flow_matching.inference_steps=50
+
+# ── Data ──────────────────────────────────────────────────────────────────────
+data:
+  data_dir:   "data/aSMA_SmoothMuscle"
+  image_size: 512
+  num_classes: 1
+  val_fraction: 0.15
+  test_fraction: 0.05
+  num_workers: 4
+
+# ── Model (velocity network backbone) ────────────────────────────────────────
+# encoder_weights is forced to null internally because in_channels differs.
+# You can use any architecture: unet, mednext, unetr, etc.
+model:
+  architecture: "unet"
+  encoder: "efficientnet-b3"
+  encoder_weights: ~          # null — non-standard channel count
+  in_channels: 3              # image channels only; mask + t added automatically
+
+# ── Training ──────────────────────────────────────────────────────────────────
+training:
+  max_epochs: 100
+  batch_size: 8
+  learning_rate: 1.0e-4
+  weight_decay: 1.0e-5
+  scheduler: "cosine"
+  early_stopping_patience: 20
+  precision: "16-mixed"
+  method: "flow_matching"     # activates FlowMatchingSegModule
+
+# ── Flow matching ──────────────────────────────────────────────────────────────
+flow_matching:
+  inference_steps: 20         # Euler ODE steps at val/test/predict time
+
+# ── Augmentation ──────────────────────────────────────────────────────────────
+augmentation:
+  flip_p: 0.5
+  rotate_limit: 90
+  brightness_limit: 0.2
+  contrast_limit: 0.2
+  hue_shift_limit: 10
+  elastic_p: 0.3
+  grid_distortion_p: 0.3
+
+# ── Logging / Checkpointing ────────────────────────────────────────────────────
+logging:
+  log_dir: "logs"
+  experiment_name: "flow_matching_seg"
+  save_top_k: 3
+  monitor: "val/dice"
+  monitor_mode: "max"
